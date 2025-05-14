@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 //import 'package:health_app/common_widgets/animated_logo_loader.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -83,6 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    final questionnaireDone =
+                        prefs.getBool('questionnaire_completed') ?? false;
                     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -95,7 +100,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     await auth.login(emailCtrl.text, passCtrl.text);
                     CustomLoader.hide(context);
                     if (auth.user != null) {
-                      Navigator.pushNamed(context, '/home');
+                      if (questionnaireDone) {
+                        Navigator.pushNamed(context, '/home');
+                      } else {
+                        Navigator.pushNamed(context, '/onboarding');
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

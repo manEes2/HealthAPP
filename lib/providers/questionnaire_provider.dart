@@ -33,7 +33,7 @@ class QuestionnaireProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveToFirestore(String uid) async {
+  Future<void> saveTofirestore(String uid) async {
     try {
       await FirebaseFirestore.instance
           .collection('questionnaires')

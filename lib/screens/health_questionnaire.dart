@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:health_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/questionnaire_provider.dart';
 
 class HealthQuestionnaireScreen extends StatefulWidget {
@@ -86,7 +87,7 @@ class _HealthQuestionnaireScreenState extends State<HealthQuestionnaireScreen> {
                             ?.uid;
                     if (userId != null) {
                       debugPrint("submitting questionnaire for user: $userId");
-                      await provider.saveToFirestore(userId);
+                      await provider.saveTofirestore(userId);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Questionnaire Submitted")));

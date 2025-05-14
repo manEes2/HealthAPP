@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
@@ -17,6 +18,7 @@ class AuthProvider with ChangeNotifier {
       //saving user data to shared preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
+      await prefs.setBool('questionnaire_completed', false);
       notifyListeners();
     }
   }

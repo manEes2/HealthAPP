@@ -39,6 +39,8 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
     final provider = Provider.of<QuestionnaireProvider>(context, listen: false);
     final userId = Provider.of<AuthProvider>(context, listen: false).user?.uid;
 
+    print(userId);
+
     provider.updateHealthHistory(_controllers[0].text);
     provider.updateFoodHistory(_controllers[1].text);
     provider.updateSymptoms(_controllers[2].text);
@@ -46,11 +48,11 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
     provider.updateFatRatio(_fatRatio);
 
     if (userId != null) {
-      await provider.saveToFirestore(userId);
+      await provider.saveTofirestore(userId);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('questionnaire_completed', true);
 
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.of(context).pushReplacementNamed('/home');
     }
   }
 
@@ -131,7 +133,10 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
               child: ElevatedButton(
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: Text(_currentPage < 4 ? "Next" : "Finish"),
+                child: Text(
+                  _currentPage < 4 ? "Next" : "Finish",
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
             ),
           ),
