@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 
 class MyProtocolScreen extends StatelessWidget {
   const MyProtocolScreen({super.key});
@@ -16,7 +15,7 @@ class MyProtocolScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userId = Provider.of<AuthProvider>(context).user?.uid;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId == null) {
       return Scaffold(
@@ -25,16 +24,16 @@ class MyProtocolScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text("My Healing Protocol")),
+      appBar: AppBar(title: const Text("My Healing Protocol")),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: _getQuestionnaireData(userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data == null) {
-            return Center(
+            return const Center(
                 child: Text(
                     "No protocol found. Please complete the questionnaire."));
           }
@@ -42,51 +41,89 @@ class MyProtocolScreen extends StatelessWidget {
           final data = snapshot.data!;
           final fatRatio = data['fatRatio'] ?? 0.0;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView(
-              children: [
-                Text("Health History: ${data['healthHistory']}",
-                    style: TextStyle(fontSize: 16)),
-                Text("Food History: ${data['foodHistory']}",
-                    style: TextStyle(fontSize: 16)),
-                Text("Symptoms: ${data['bodySymptoms']}",
-                    style: TextStyle(fontSize: 16)),
-                Text("Trouble Foods: ${data['troubleFoods']}",
-                    style: TextStyle(fontSize: 16)),
-                Text("Fat Ratio: ${fatRatio.toStringAsFixed(1)}%",
-                    style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 20),
-                Divider(),
-                Text("🛠 Your Personalized Protocol",
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                SizedBox(height: 8),
-                if (fatRatio > 25)
-                  Text("- Start with liver detox + green juices",
-                      style: TextStyle(color: Colors.green[800])),
-                if (data['bodySymptoms']
-                    .toString()
-                    .toLowerCase()
-                    .contains("head"))
-                  Text("- Headaches suggest hydration + magnesium-rich foods",
-                      style: TextStyle(color: Colors.green[800])),
-                if (data['troubleFoods']
-                    .toString()
-                    .toLowerCase()
-                    .contains("gluten"))
-                  Text(
-                      "- Avoid gluten-based protocols & use grain-free alternatives"),
-                SizedBox(height: 20),
-                Text("- Begin with 10-day cleanse + lemon water",
-                    style: TextStyle(color: Colors.green[800])),
-                Text(
-                    "- Eat healing foods: papaya, wild blueberries, leafy greens",
-                    style: TextStyle(color: Colors.green[800])),
-              ],
-            ),
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // 👤 User Input Summary
+              _buildSectionTitle("📝 Your Input Summary"),
+              _buildInfoCard("Health History", data['healthHistory']),
+              _buildInfoCard("Food History", data['foodHistory']),
+              _buildInfoCard("Symptoms", data['bodySymptoms']),
+              _buildInfoCard("Trouble Foods", data['troubleFoods']),
+              _buildInfoCard("Fat Ratio", "${fatRatio.toStringAsFixed(1)}%"),
+
+              const SizedBox(height: 30),
+
+              // 🛠️ Personalized Protocol
+              _buildSectionTitle("🛠 Personalized Healing Protocol"),
+              _buildProtocolTip("Start with 10-day cleanse using lemon water"),
+              _buildProtocolTip(
+                  "Eat healing foods: papaya, wild blueberries, leafy greens"),
+
+              if (fatRatio > 25)
+                _buildProtocolTip(
+                    "High fat ratio detected — Begin with liver detox + green juices"),
+
+              if (data['bodySymptoms']
+                  .toString()
+                  .toLowerCase()
+                  .contains("head"))
+                _buildProtocolTip(
+                    "Headaches? Increase hydration and magnesium-rich foods"),
+
+              if (data['troubleFoods']
+                  .toString()
+                  .toLowerCase()
+                  .contains("gluten"))
+                _buildProtocolTip(
+                    "Avoid gluten-based suggestions — use grain-free alternatives"),
+            ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+            fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String label, String value) {
+    return Card(
+      color: Colors.green[50],
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: ListTile(
+        leading: const Icon(Icons.info_outline, color: Colors.green),
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(value, style: const TextStyle(fontSize: 15)),
+      ),
+    );
+  }
+
+  Widget _buildProtocolTip(String tip) {
+    return Card(
+      color: Colors.lightGreen[100],
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.green),
+            const SizedBox(width: 10),
+            Expanded(child: Text(tip, style: const TextStyle(fontSize: 16))),
+          ],
+        ),
       ),
     );
   }

@@ -16,6 +16,7 @@ dependencies:
   cloud_firestore: ^5.6.7
   shared_preferences: ^2.5.3
   lottie: ^3.3.1
+  http: ^1.4.0
   
 
 dev_dependencies:
@@ -29,4 +30,6 @@ flutter:
     - assets/images/heartbeat.png
     - assets/images/health_logo.png
     - assets/animations/health.json
+    - assets/animations/progress.json
+    - assets/animations/motivation.json
 

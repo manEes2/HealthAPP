@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:health_app/common_widgets/animated_logo_loader.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,7 +53,9 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('questionnaire_completed', true);
 
+      AnimatedLogoLoader.show(context);
       Navigator.of(context).pushReplacementNamed('/home');
+      AnimatedLogoLoader.hide(context);
     }
   }
 
