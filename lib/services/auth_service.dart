@@ -24,7 +24,7 @@ class AuthService {
       );
       return result.user;
     } catch (e) {
-      print(e);
+      print('Login failed: $e');
       return null;
     }
   }

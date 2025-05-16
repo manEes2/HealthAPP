@@ -1,11 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:health_app/common_widgets/animated_logo_loader.dart';
-import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../../providers/auth_provider.dart';
-import '../../../providers/questionnaire_provider.dart';
 
 class QuestionnaireWizard extends StatefulWidget {
   const QuestionnaireWizard({super.key});
@@ -15,134 +10,214 @@ class QuestionnaireWizard extends StatefulWidget {
 }
 
 class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
-  final _pageController = PageController();
-  int _currentPage = 0;
-  final _formKeys = List.generate(5, (_) => GlobalKey<FormState>());
+  final List<String> healthConditions = [
+    "Diabetes",
+    "High Blood Pressure",
+    "Asthma",
+    "Thyroid",
+    "PCOS",
+    "Heart Disease",
+    "Other"
+  ];
 
-  final _controllers = List.generate(4, (_) => TextEditingController());
-  double _fatRatio = 0.0;
+  final List<String> troubleFoods = [
+    "Gluten",
+    "Dairy",
+    "Sugar",
+    "Caffeine",
+    "Soy",
+    "Fried Foods"
+  ];
+
+  final List<String> bodyParts = [
+    "Head",
+    "Chest",
+    "Back",
+    "Stomach",
+    "Joints",
+    "Legs",
+    "Arms",
+  ];
+
+  Set<String> selectedHealthConditions = {};
+  Set<String> selectedTroubleFoods = {};
+  Map<String, double> symptomSeverity = {};
+  double fatRatio = 20.0;
+
+  int _currentPage = 0;
+  final PageController _pageController = PageController();
 
   void _nextPage() {
-    if (_formKeys[_currentPage].currentState!.validate()) {
-      if (_currentPage < 4) {
-        setState(() => _currentPage++);
-        _pageController.nextPage(
-          duration: Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      } else {
-        _submit();
-      }
+    if (_currentPage < 3) {
+      setState(() => _currentPage++);
+      _pageController.nextPage(
+          duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+    } else {
+      _submit();
     }
   }
 
   Future<void> _submit() async {
-    final provider = Provider.of<QuestionnaireProvider>(context, listen: false);
-    final userId = Provider.of<AuthProvider>(context, listen: false).user?.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-    print(userId);
+    await FirebaseFirestore.instance.collection("questionnaires").doc(uid).set({
+      "healthHistory": selectedHealthConditions.toList(),
+      "troubleFoods": selectedTroubleFoods.toList(),
+      "fatRatio": fatRatio,
+      "symptomDetails": symptomSeverity,
+    }, SetOptions(merge: true));
 
-    provider.updateHealthHistory(_controllers[0].text);
-    provider.updateFoodHistory(_controllers[1].text);
-    provider.updateSymptoms(_controllers[2].text);
-    provider.updateTroubleFoods(_controllers[3].text);
-    provider.updateFatRatio(_fatRatio);
-
-    if (userId != null) {
-      await provider.saveTofirestore(userId);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('questionnaire_completed', true);
-
-      AnimatedLogoLoader.show(context);
-      Navigator.of(context).pushReplacementNamed('/home');
-      AnimatedLogoLoader.hide(context);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Questionnaire submitted successfully")));
+    Navigator.pushReplacementNamed(context, "/home");
   }
 
   @override
   Widget build(BuildContext context) {
-    final titles = [
-      "Health History",
-      "Food History",
-      "Symptoms & Severity",
-      "Trouble Foods",
-      "Fat Ratio"
-    ];
-
     return Scaffold(
-      appBar: AppBar(title: Text("Onboarding (${_currentPage + 1}/5)")),
+      appBar: AppBar(title: Text("Onboarding (${_currentPage + 1}/4)")),
       body: Column(
         children: [
-          LinearProgressIndicator(value: (_currentPage + 1) / 5),
+          LinearProgressIndicator(value: (_currentPage + 1) / 4),
           Expanded(
-            child: PageView.builder(
+            child: PageView(
               controller: _pageController,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: 5,
-              itemBuilder: (_, index) {
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKeys[index],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Lottie.asset("assets/animations/health.json",
-                            height: 150),
-                        SizedBox(height: 10),
-                        Text(titles[index],
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 20),
-                        if (index < 4)
-                          TextFormField(
-                            controller: _controllers[index],
-                            validator: (val) =>
-                                val!.isEmpty ? 'Required' : null,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText:
-                                  "Enter your ${titles[index].toLowerCase()}",
-                            ),
-                          )
-                        else
-                          Column(
-                            children: [
-                              Text(
-                                  "Fat Ratio: ${_fatRatio.toStringAsFixed(1)}%"),
-                              Slider(
-                                value: _fatRatio,
-                                min: 0,
-                                max: 100,
-                                divisions: 100,
-                                label: _fatRatio.toStringAsFixed(1),
-                                onChanged: (value) {
-                                  setState(() => _fatRatio = value);
-                                },
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildMultiSelectPage("Select Health Conditions",
+                    healthConditions, selectedHealthConditions),
+                _buildMultiSelectPage(
+                    "Select Trouble Foods", troubleFoods, selectedTroubleFoods),
+                _buildSymptomPage(),
+                _buildFatRatioPage()
+              ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _nextPage,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: Text(
-                  _currentPage < 4 ? "Next" : "Finish",
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: _nextPage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
               ),
+              child: Text(_currentPage == 3 ? "Finish" : "Next"),
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMultiSelectPage(
+    String title,
+    List<String> options,
+    Set<String> selectedSet,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 10,
+            children: options.map((item) {
+              final selected = selectedSet.contains(item);
+              return FilterChip(
+                label: Text(item),
+                selected: selected,
+                selectedColor: Colors.green,
+                onSelected: (_) {
+                  setState(() {
+                    selected ? selectedSet.remove(item) : selectedSet.add(item);
+                  });
+                },
+              );
+            }).toList(),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSymptomPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Select Symptoms and Severity",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            children: bodyParts.map((part) {
+              final selected = symptomSeverity.containsKey(part);
+              return ChoiceChip(
+                label: Text(part),
+                selected: selected,
+                selectedColor: Colors.green,
+                onSelected: (_) {
+                  setState(() {
+                    selected
+                        ? symptomSeverity.remove(part)
+                        : symptomSeverity[part] = 5.0;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          ...symptomSeverity.entries.map((entry) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      "${entry.key} Severity: ${entry.value.toStringAsFixed(1)}"),
+                  Slider(
+                    min: 1,
+                    max: 10,
+                    value: entry.value,
+                    divisions: 9,
+                    onChanged: (val) {
+                      setState(() {
+                        symptomSeverity[entry.key] = val;
+                      });
+                    },
+                  )
+                ],
+              ))
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFatRatioPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Estimate Your Fat Ratio (%)",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Text("${fatRatio.toStringAsFixed(1)}%",
+              style: const TextStyle(fontSize: 16)),
+          Slider(
+            min: 0,
+            max: 100,
+            divisions: 100,
+            value: fatRatio,
+            label: fatRatio.toStringAsFixed(1),
+            onChanged: (value) {
+              setState(() => fatRatio = value);
+            },
+          )
         ],
       ),
     );

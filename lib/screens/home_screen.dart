@@ -1,12 +1,11 @@
 import 'dart:async';
-
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:health_app/models/quote_model.dart';
 import 'package:health_app/services/quote_service.dart';
 import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
-
-import '../providers/auth_provider.dart';
 import 'my_protocol_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,33 +17,73 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Quote> quotes = [];
+  List<String> goals = [];
+  List<String> reminders = [];
+  Set<String> completedGoals = {};
+  String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
   int _currentPage = 0;
   final PageController _pageController = PageController();
   Timer? _timer;
-
-  final List<String> reminders = const [
-    "🌤️ Morning Walk - 7:00 AM",
-    "🥤 Drink detox juice - 8:00 AM",
-    "💊 Take supplement - 10:00 AM",
-    "🧘‍♂️ Meditation - 6:00 PM",
-  ];
 
   @override
   void initState() {
     super.initState();
     _fetchQuotes();
+    _fetchGoalsAndReminders();
   }
 
   void _fetchQuotes() async {
     try {
       final fetchedQuotes = await QuoteService.fetchQuotes();
       if (mounted) {
-        setState(() => quotes = fetchedQuotes.take(10).toList()); // Limit to 10
+        setState(() => quotes = fetchedQuotes.take(10).toList());
         _startAutoScroll();
       }
     } catch (e) {
       print("Failed to fetch quotes: $e");
     }
+  }
+
+  void _fetchGoalsAndReminders() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final data = doc.data();
+    if (data != null) {
+      setState(() {
+        goals = List<String>.from(data['goals'] ?? []);
+        reminders = List<String>.from(data['reminders'] ?? []);
+        final String lastUpdated = data['completedGoalsDate'] ?? '';
+        if (lastUpdated == today) {
+          completedGoals = Set<String>.from(data['completedGoals'] ?? []);
+        } else {
+          completedGoals.clear();
+        }
+      });
+    }
+  }
+
+  Future<void> _saveCompletedGoals() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // Save current day's completed goals
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'completedGoals': completedGoals.toList(),
+      'completedGoalsDate': today,
+    }, SetOptions(merge: true));
+
+    // Also log to daily history subcollection
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('history')
+        .doc(today)
+        .set({
+      'completedGoals': completedGoals.toList(),
+      'date': today,
+    });
   }
 
   void _startAutoScroll() {
@@ -67,22 +106,19 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  double _calculateProgress() {
+    if (goals.isEmpty) return 0;
+    return completedGoals.length / goals.length;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
+    final progress = _calculateProgress();
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Welcome to Health Companion"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await auth.logout();
-              Navigator.pushReplacementNamed(context, "/login");
-            },
-          )
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -90,35 +126,41 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Progress Section
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Lottie.asset("assets/animations/progress.json",
-                        width: 100, height: 100),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Today's Progress",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          const LinearProgressIndicator(
-                              value: 0.6, color: Colors.green),
-                          const SizedBox(height: 8),
-                          Text("6/10 goals achieved",
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey[600])),
-                        ],
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/history');
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Lottie.asset("assets/animations/progress.json",
+                          width: 100, height: 100),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Today's Progress",
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 10),
+                            LinearProgressIndicator(
+                                value: progress, color: Colors.green),
+                            const SizedBox(height: 8),
+                            Text(
+                                "${completedGoals.length}/${goals.length} goals achieved",
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey[600])),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -157,13 +199,35 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
 
+            // Goals
+            if (goals.isNotEmpty) ...[
+              const Text("🎯 Your Goals",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              ...goals.map((goal) => CheckboxListTile(
+                    title: Text(goal),
+                    value: completedGoals.contains(goal),
+                    activeColor: Colors.green,
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          completedGoals.add(goal);
+                        } else {
+                          completedGoals.remove(goal);
+                        }
+                        _saveCompletedGoals();
+                      });
+                    },
+                  )),
+              const SizedBox(height: 20),
+            ],
+
             // Daily Reminders
             const Text("🕒 Today's Reminders",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             ...reminders.map((item) => ListTile(
-                  leading: const Icon(Icons.check_circle_outline,
-                      color: Colors.green),
+                  leading: const Icon(Icons.alarm, color: Colors.green),
                   title: Text(item),
                 )),
 
@@ -192,6 +256,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/goals');
+        },
+        backgroundColor: Colors.green,
+        tooltip: "Start a new activity",
+        child: const Icon(Icons.sports_baseball, color: Colors.white, size: 30),
       ),
     );
   }

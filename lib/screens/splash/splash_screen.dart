@@ -33,11 +33,17 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(Duration(seconds: 3));
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final isQuestionnaireCompleted =
+        prefs.getBool('questionnaire_completed') ?? false;
 
     if (!mounted) return;
 
     if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, '/home');
+      if (isQuestionnaireCompleted) {
+        Navigator.pushReplacementNamed(context, '/onboarding');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }

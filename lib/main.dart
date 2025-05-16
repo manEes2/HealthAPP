@@ -6,6 +6,8 @@ import 'package:health_app/screens/auth/login_screen.dart';
 import 'package:health_app/screens/auth/register_screen.dart';
 import 'package:health_app/screens/home_screen.dart';
 import 'package:health_app/screens/onboarding/questionnaire_wizard.dart';
+import 'package:health_app/screens/personal/goal_history_screen.dart';
+import 'package:health_app/screens/personal/set_goal_screen.dart';
 import 'package:health_app/screens/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -41,8 +43,10 @@ class MyApp extends StatelessWidget {
           '/home': (context) => HomeScreen(),
           '/login': (context) => LoginScreen(),
           '/onboarding': (context) => QuestionnaireWizard(),
+          '/goals': (context) => SetGoalsScreen(),
+          '/history': (context) => GoalHistoryScreen(),
         },
-        home: SplashScreen(), // Pass the isLoggedIn value to the SplashScreen
+        home: SplashScreen(),
       ),
     );
   }

@@ -40,17 +40,26 @@ class MyProtocolScreen extends StatelessWidget {
 
           final data = snapshot.data!;
           final fatRatio = data['fatRatio'] ?? 0.0;
+          final healthHistory = List<String>.from(data['healthHistory'] ?? []);
+          final troubleFoods = List<String>.from(data['troubleFoods'] ?? []);
+          final symptomDetails =
+              Map<String, dynamic>.from(data['symptomDetails'] ?? {});
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // 👤 User Input Summary
               _buildSectionTitle("📝 Your Input Summary"),
-              _buildInfoCard("Health History", data['healthHistory']),
-              _buildInfoCard("Food History", data['foodHistory']),
-              _buildInfoCard("Symptoms", data['bodySymptoms']),
-              _buildInfoCard("Trouble Foods", data['troubleFoods']),
+              _buildInfoCard(
+                  "Health History", (data['healthHistory'] as List).join(", ")),
+              _buildInfoCard(
+                  "Trouble Foods", (data['troubleFoods'] as List).join(", ")),
               _buildInfoCard("Fat Ratio", "${fatRatio.toStringAsFixed(1)}%"),
+              _buildInfoCard(
+                  "Symptoms",
+                  symptomDetails.entries
+                      .map((e) => "${e.key} (${e.value}/10)")
+                      .join(", ")),
 
               const SizedBox(height: 30),
 
@@ -64,17 +73,12 @@ class MyProtocolScreen extends StatelessWidget {
                 _buildProtocolTip(
                     "High fat ratio detected — Begin with liver detox + green juices"),
 
-              if (data['bodySymptoms']
-                  .toString()
-                  .toLowerCase()
-                  .contains("head"))
+              if (symptomDetails.keys
+                  .any((part) => part.toLowerCase().contains("head")))
                 _buildProtocolTip(
                     "Headaches? Increase hydration and magnesium-rich foods"),
 
-              if (data['troubleFoods']
-                  .toString()
-                  .toLowerCase()
-                  .contains("gluten"))
+              if (troubleFoods.map((e) => e.toLowerCase()).contains("gluten"))
                 _buildProtocolTip(
                     "Avoid gluten-based suggestions — use grain-free alternatives"),
             ],
