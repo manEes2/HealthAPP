@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,19 +32,30 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 3));
     final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
-    final isQuestionnaireCompleted =
-        prefs.getBool('questionnaire_completed') ?? false;
+
+    final user = FirebaseAuth.instance.currentUser;
+    final isLoggedIn = user != null;
+    prefs.setBool('is_logged_in', isLoggedIn);
 
     if (!mounted) return;
 
     if (isLoggedIn) {
+      final uid = user.uid;
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      final isQuestionnaireCompleted =
+          userDoc.data()?['questionnaire_completed'] ?? false;
+
+      // Cache locally
+      prefs.setBool('questionnaire_completed', isQuestionnaireCompleted);
+
       if (isQuestionnaireCompleted) {
-        Navigator.pushReplacementNamed(context, '/onboarding');
-      } else {
         Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/onboarding');
       }
     } else {
       Navigator.pushReplacementNamed(context, '/login');

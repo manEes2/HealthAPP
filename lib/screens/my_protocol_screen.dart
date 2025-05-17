@@ -40,7 +40,7 @@ class MyProtocolScreen extends StatelessWidget {
 
           final data = snapshot.data!;
           final fatRatio = data['fatRatio'] ?? 0.0;
-          final healthHistory = List<String>.from(data['healthHistory'] ?? []);
+          //final healthHistory = List<String>.from(data['healthHistory'] ?? []);
           final troubleFoods = List<String>.from(data['troubleFoods'] ?? []);
           final symptomDetails =
               Map<String, dynamic>.from(data['symptomDetails'] ?? {});

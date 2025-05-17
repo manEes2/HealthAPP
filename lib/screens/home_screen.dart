@@ -47,19 +47,31 @@ class _HomeScreenState extends State<HomeScreen> {
   void _fetchGoalsAndReminders() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+
     final doc =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
+
     if (data != null) {
+      final fetchedGoals = List<String>.from(data['goals'] ?? []);
+      final fetchedReminders = List<String>.from(data['reminders'] ?? []);
+      final fetchedCompleted = Set<String>.from(data['completedGoals'] ?? []);
+      final lastUpdated = data['completedGoalsDate'] ?? '';
+
       setState(() {
-        goals = List<String>.from(data['goals'] ?? []);
-        reminders = List<String>.from(data['reminders'] ?? []);
-        final String lastUpdated = data['completedGoalsDate'] ?? '';
-        if (lastUpdated == today) {
-          completedGoals = Set<String>.from(data['completedGoals'] ?? []);
-        } else {
-          completedGoals.clear();
+        for (final goal in fetchedGoals) {
+          if (!goals.contains(goal)) {
+            goals.add(goal);
+          }
         }
+
+        for (final reminder in fetchedReminders) {
+          if (!reminders.contains(reminder)) {
+            reminders.add(reminder);
+          }
+        }
+
+        completedGoals = lastUpdated == today ? fetchedCompleted : {};
       });
     }
   }
@@ -108,7 +120,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double _calculateProgress() {
     if (goals.isEmpty) return 0;
-    return completedGoals.length / goals.length;
+
+    // Count how many of the current goals are marked as completed
+    final completed = goals.where((g) => completedGoals.contains(g)).length;
+    return completed / goals.length;
   }
 
   @override
@@ -120,141 +135,149 @@ class _HomeScreenState extends State<HomeScreen> {
         automaticallyImplyLeading: false,
         title: const Text("Welcome to Health Companion"),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Progress Section
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/history');
-              },
-              child: Card(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Lottie.asset("assets/animations/progress.json",
-                          width: 100, height: 100),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Today's Progress",
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            LinearProgressIndicator(
-                                value: progress, color: Colors.green),
-                            const SizedBox(height: 8),
-                            Text(
-                                "${completedGoals.length}/${goals.length} goals achieved",
-                                style: TextStyle(
-                                    fontSize: 14, color: Colors.grey[600])),
-                          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _fetchGoalsAndReminders();
+          setState(() {});
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress Section
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/history');
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Lottie.asset("assets/animations/progress.json",
+                            width: 100, height: 100),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("Today's Progress",
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 10),
+                              LinearProgressIndicator(
+                                  value: progress, color: Colors.green),
+                              const SizedBox(height: 8),
+                              Text(
+                                  "${goals.where((g) => completedGoals.contains(g)).length}/${goals.length} goals achieved",
+                                  style: TextStyle(
+                                      fontSize: 14, color: Colors.grey[600])),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Motivation Quotes
-            const Text("💬 Daily Motivation",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 140,
-              child: quotes.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : PageView.builder(
-                      controller: _pageController,
-                      itemCount: quotes.length,
-                      itemBuilder: (_, index) {
-                        final quote = quotes[index];
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          color: Colors.green[50],
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Center(
-                              child: Text(
-                                "“${quote.quote}”\n— ${quote.author}",
-                                style: const TextStyle(fontSize: 16),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 20),
-
-            // Goals
-            if (goals.isNotEmpty) ...[
-              const Text("🎯 Your Goals",
+              // Motivation Quotes
+              const Text("💬 Daily Motivation",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              ...goals.map((goal) => CheckboxListTile(
-                    title: Text(goal),
-                    value: completedGoals.contains(goal),
-                    activeColor: Colors.green,
-                    onChanged: (val) {
-                      setState(() {
-                        if (val == true) {
-                          completedGoals.add(goal);
-                        } else {
-                          completedGoals.remove(goal);
-                        }
-                        _saveCompletedGoals();
-                      });
-                    },
-                  )),
-              const SizedBox(height: 20),
-            ],
-
-            // Daily Reminders
-            const Text("🕒 Today's Reminders",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            ...reminders.map((item) => ListTile(
-                  leading: const Icon(Icons.alarm, color: Colors.green),
-                  title: Text(item),
-                )),
-
-            const SizedBox(height: 30),
-
-            // Protocol Button
-            Center(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const Icon(Icons.local_hospital, color: Colors.white),
-                label: const Text("View My Protocol",
-                    style: TextStyle(fontSize: 16, color: Colors.white)),
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const MyProtocolScreen()));
-                },
+              SizedBox(
+                height: 140,
+                child: quotes.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : PageView.builder(
+                        controller: _pageController,
+                        itemCount: quotes.length,
+                        itemBuilder: (_, index) {
+                          final quote = quotes[index];
+                          return Card(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            color: Colors.green[50],
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Center(
+                                child: Text(
+                                  "“${quote.quote}”\n— ${quote.author}",
+                                  style: const TextStyle(fontSize: 16),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+
+              // Goals
+              if (goals.isNotEmpty) ...[
+                const Text("🎯 Your Goals",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                ...goals.map((goal) => CheckboxListTile(
+                      title: Text(goal),
+                      value: completedGoals.contains(goal),
+                      activeColor: Colors.green,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            completedGoals.add(goal);
+                          } else {
+                            completedGoals.remove(goal);
+                          }
+                          _saveCompletedGoals();
+                        });
+                      },
+                    )),
+                const SizedBox(height: 20),
+              ],
+
+              // Daily Reminders
+              const Text("🕒 Today's Reminders",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              ...reminders.map((item) => ListTile(
+                    leading: const Icon(Icons.alarm, color: Colors.green),
+                    title: Text(item),
+                  )),
+
+              const SizedBox(height: 30),
+
+              // Protocol Button
+              Center(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.local_hospital, color: Colors.white),
+                  label: const Text("View My Protocol",
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const MyProtocolScreen()));
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

@@ -47,7 +47,26 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
   int _currentPage = 0;
   final PageController _pageController = PageController();
 
+  bool _validateCurrentPage() {
+    switch (_currentPage) {
+      case 0:
+        return selectedHealthConditions.isNotEmpty;
+      case 1:
+        return selectedTroubleFoods.isNotEmpty;
+      case 2:
+        return symptomSeverity.isNotEmpty;
+      default:
+        return true;
+    }
+  }
+
   void _nextPage() {
+    if (!_validateCurrentPage()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please complete current section")),
+      );
+      return;
+    }
     if (_currentPage < 3) {
       setState(() => _currentPage++);
       _pageController.nextPage(
@@ -68,8 +87,14 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
       "symptomDetails": symptomSeverity,
     }, SetOptions(merge: true));
 
+    // ✅ Mark onboarding complete
+    await FirebaseFirestore.instance.collection("users").doc(uid).set({
+      "questionnaire_completed": true,
+    }, SetOptions(merge: true));
+
     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Questionnaire submitted successfully")));
+      const SnackBar(content: Text("Questionnaire submitted successfully")),
+    );
     Navigator.pushReplacementNamed(context, "/home");
   }
 
