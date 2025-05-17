@@ -1,90 +1,135 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class MyProtocolScreen extends StatelessWidget {
   const MyProtocolScreen({super.key});
 
-  Future<Map<String, dynamic>?> _getQuestionnaireData(String uid) async {
-    final doc = await FirebaseFirestore.instance
+  Future<Map<String, dynamic>> _getCombinedData(String uid) async {
+    final questionnaire = await FirebaseFirestore.instance
         .collection('questionnaires')
         .doc(uid)
         .get();
-    return doc.exists ? doc.data() : null;
+
+    final protocol =
+        await FirebaseFirestore.instance.collection('protocols').doc(uid).get();
+
+    return {
+      'questionnaire': questionnaire.data(),
+      'protocol': protocol.data(),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-
-    if (userId == null) {
-      return Scaffold(
-        body: Center(child: Text("User not logged in")),
-      );
-    }
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       appBar: AppBar(title: const Text("My Healing Protocol")),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _getQuestionnaireData(userId),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _getCombinedData(userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || snapshot.data == null) {
+          if (!snapshot.hasData || snapshot.data!['questionnaire'] == null) {
             return const Center(
-                child: Text(
-                    "No protocol found. Please complete the questionnaire."));
+              child: Text("Complete the questionnaire first"),
+            );
           }
 
           final data = snapshot.data!;
-          final fatRatio = data['fatRatio'] ?? 0.0;
-          //final healthHistory = List<String>.from(data['healthHistory'] ?? []);
-          final troubleFoods = List<String>.from(data['troubleFoods'] ?? []);
-          final symptomDetails =
-              Map<String, dynamic>.from(data['symptomDetails'] ?? {});
+          final protocolContent = data['protocol']?['content'] as String?;
+          final questionnaireData =
+              data['questionnaire'] as Map<String, dynamic>;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // 👤 User Input Summary
-              _buildSectionTitle("📝 Your Input Summary"),
-              _buildInfoCard(
-                  "Health History", (data['healthHistory'] as List).join(", ")),
-              _buildInfoCard(
-                  "Trouble Foods", (data['troubleFoods'] as List).join(", ")),
-              _buildInfoCard("Fat Ratio", "${fatRatio.toStringAsFixed(1)}%"),
-              _buildInfoCard(
-                  "Symptoms",
-                  symptomDetails.entries
-                      .map((e) => "${e.key} (${e.value}/10)")
-                      .join(", ")),
-
-              const SizedBox(height: 30),
-
-              // 🛠️ Personalized Protocol
-              _buildSectionTitle("🛠 Personalized Healing Protocol"),
-              _buildProtocolTip("Start with 10-day cleanse using lemon water"),
-              _buildProtocolTip(
-                  "Eat healing foods: papaya, wild blueberries, leafy greens"),
-
-              if (fatRatio > 25)
-                _buildProtocolTip(
-                    "High fat ratio detected — Begin with liver detox + green juices"),
-
-              if (symptomDetails.keys
-                  .any((part) => part.toLowerCase().contains("head")))
-                _buildProtocolTip(
-                    "Headaches? Increase hydration and magnesium-rich foods"),
-
-              if (troubleFoods.map((e) => e.toLowerCase()).contains("gluten"))
-                _buildProtocolTip(
-                    "Avoid gluten-based suggestions — use grain-free alternatives"),
-            ],
+          return _buildProtocolContent(
+            context,
+            protocolContent: protocolContent,
+            questionnaireData: questionnaireData,
           );
         },
       ),
+    );
+  }
+
+  Widget _buildProtocolContent(
+    BuildContext context, {
+    required Map<String, dynamic> questionnaireData,
+    String? protocolContent,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildSectionTitle("📝 Your Health Profile"),
+        _buildUserInfoCards(questionnaireData),
+        const SizedBox(height: 30),
+        _buildSectionTitle("🛠 Personalized Protocol"),
+        if (protocolContent != null)
+          _buildAIProtocol(protocolContent)
+        else
+          _buildFallbackProtocol(questionnaireData),
+      ],
+    );
+  }
+
+  Widget _buildAIProtocol(String content) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: MarkdownBody(
+          data: content,
+          styleSheet: MarkdownStyleSheet(
+            h1: TextStyle(color: Colors.green[800], fontSize: 24),
+            h2: TextStyle(color: Colors.green[700], fontSize: 20),
+            p: const TextStyle(fontSize: 16, height: 1.4),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackProtocol(Map<String, dynamic> data) {
+    final fatRatio = data['fatRatio'] ?? 0.0;
+    final troubleFoods = List<String>.from(data['troubleFoods'] ?? []);
+    final symptoms = Map<String, dynamic>.from(data['symptomDetails'] ?? {});
+
+    return Column(
+      children: [
+        _buildProtocolTip("Start with 10-day cleanse using lemon water"),
+        _buildProtocolTip(
+            "Eat healing foods: papaya, blueberries, leafy greens"),
+        if (fatRatio > 25)
+          _buildProtocolTip("High fat ratio detected - Begin liver detox"),
+        if (symptoms.keys.any((part) => part.toLowerCase().contains("head")))
+          _buildProtocolTip("For headaches: Increase hydration & magnesium"),
+        if (troubleFoods.contains("Gluten"))
+          _buildProtocolTip("Use gluten-free alternatives in recipes"),
+      ],
+    );
+  }
+
+  Widget _buildUserInfoCards(Map<String, dynamic> data) {
+    return Column(
+      children: [
+        _buildInfoCard(
+            "Health History", (data['healthHistory'] as List).join(", ")),
+        _buildInfoCard(
+            "Trouble Foods", (data['troubleFoods'] as List).join(", ")),
+        _buildInfoCard(
+            "Fat Ratio", "${(data['fatRatio'] ?? 0.0).toStringAsFixed(1)}%"),
+        _buildInfoCard(
+          "Symptoms",
+          (data['symptomDetails'] as Map)
+              .entries
+              .map((e) => "${e.key} (${e.value}/10)")
+              .join(", "),
+        ),
+      ],
     );
   }
 

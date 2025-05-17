@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:health_app/core/utils/gemini_service.dart';
 
 class QuestionnaireWizard extends StatefulWidget {
   const QuestionnaireWizard({super.key});
@@ -80,22 +81,50 @@ class _QuestionnaireWizardState extends State<QuestionnaireWizard> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    await FirebaseFirestore.instance.collection("questionnaires").doc(uid).set({
-      "healthHistory": selectedHealthConditions.toList(),
-      "troubleFoods": selectedTroubleFoods.toList(),
-      "fatRatio": fatRatio,
-      "symptomDetails": symptomSeverity,
-    }, SetOptions(merge: true));
+    try {
+      // Save questionnaire data
+      final questionnaireData = {
+        "healthHistory": selectedHealthConditions.toList(),
+        "troubleFoods": selectedTroubleFoods.toList(),
+        "fatRatio": fatRatio,
+        "symptomDetails": symptomSeverity,
+      };
 
-    // ✅ Mark onboarding complete
-    await FirebaseFirestore.instance.collection("users").doc(uid).set({
-      "questionnaire_completed": true,
-    }, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection("questionnaires")
+          .doc(uid)
+          .set(
+            questionnaireData,
+            SetOptions(merge: true),
+          );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Questionnaire submitted successfully")),
-    );
-    Navigator.pushReplacementNamed(context, "/home");
+      await FirebaseFirestore.instance.collection("users").doc(uid).set({
+        "questionnaire_completed": true,
+      }, SetOptions(merge: true));
+
+      // ✅ Log before sending to Gemini
+      print("Sending data to Gemini: $questionnaireData");
+
+      // Generate AI Protocol
+      final protocol = await GeminiService.generateProtocol(questionnaireData);
+      print("Received protocol: $protocol");
+
+      // Save Protocol
+      await FirebaseFirestore.instance.collection("protocols").doc(uid).set(
+          {"content": protocol, "generatedAt": FieldValue.serverTimestamp()});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Questionnaire submitted successfully")),
+      );
+
+      Navigator.pushReplacementNamed(context, "/home");
+    } catch (e) {
+      print("Error during submission: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to submit: $e")),
+      );
+    }
   }
 
   @override
