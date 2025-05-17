@@ -1,10 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-//import 'package:health_app/common_widgets/animated_logo_loader.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../../providers/auth_provider.dart';
+import '../../../providers/auth_provider.dart' as my_auth;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<my_auth.AuthProvider>(context);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -85,21 +85,36 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    final questionnaireDone =
-                        prefs.getBool('questionnaire_completed') ?? false;
                     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Please fill in all fields"),
-                        ),
+                        SnackBar(content: Text("Please fill in all fields")),
                       );
                       return;
                     }
+
                     CustomLoader.show(context, text: "Logging in...");
                     await auth.login(emailCtrl.text, passCtrl.text);
                     CustomLoader.hide(context);
+
                     if (auth.user != null) {
+                      final user = FirebaseAuth.instance.currentUser;
+                      bool questionnaireDone = false;
+
+                      if (user != null) {
+                        final userDoc = await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .get();
+
+                        questionnaireDone =
+                            userDoc.data()?['questionnaire_completed'] ?? false;
+
+                        // Optionally update local cache
+                        final prefs = await SharedPreferences.getInstance();
+                        prefs.setBool(
+                            'questionnaire_completed', questionnaireDone);
+                      }
+
                       if (questionnaireDone) {
                         Navigator.pushNamed(context, '/home');
                       } else {
@@ -107,9 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Login failed"),
-                        ),
+                        SnackBar(content: Text("Login failed")),
                       );
                     }
                   },
