@@ -34,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 10));
+    await Future.delayed(const Duration(seconds: 5));
     final prefs = await SharedPreferences.getInstance();
 
     final user = FirebaseAuth.instance.currentUser;
@@ -54,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen>
       prefs.setBool('questionnaire_completed', isQuestionnaireCompleted);
 
       if (isQuestionnaireCompleted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/welcome');
       } else {
         Navigator.pushReplacementNamed(context, '/onboarding');
       }

@@ -182,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
 
                       if (questionnaireDone) {
-                        Navigator.pushNamed(context, '/home');
+                        Navigator.pushNamed(context, '/welcome');
                       } else {
                         Navigator.pushNamed(context, '/onboarding');
                       }

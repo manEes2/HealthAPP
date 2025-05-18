@@ -6,9 +6,12 @@ import 'package:health_app/providers/questionnaire_provider.dart';
 import 'package:health_app/screens/auth/login_screen.dart';
 import 'package:health_app/screens/auth/register_screen.dart';
 import 'package:health_app/screens/home_screen.dart';
+import 'package:health_app/screens/my_protocol_screen.dart';
 import 'package:health_app/screens/onboarding/questionnaire_wizard.dart';
 import 'package:health_app/screens/personal/goal_history_screen.dart';
 import 'package:health_app/screens/personal/set_goal_screen.dart';
+import 'package:health_app/screens/personal/setting_screen.dart';
+import 'package:health_app/screens/personal/welcome_screen.dart';
 import 'package:health_app/screens/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -46,6 +49,9 @@ class MyApp extends StatelessWidget {
           '/onboarding': (context) => QuestionnaireWizard(),
           '/goals': (context) => SetGoalsScreen(),
           '/history': (context) => GoalHistoryScreen(),
+          '/welcome': (context) => WelcomeScreen(),
+          '/protocol': (context) => MyProtocolScreen(),
+          '/settings': (context) => SettingsScreen(),
         },
         home: SplashScreen(),
       ),
