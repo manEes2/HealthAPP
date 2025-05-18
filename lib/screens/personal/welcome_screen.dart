@@ -58,14 +58,16 @@ class WelcomeScreen extends StatelessWidget {
                         top: 132,
                         right: 48,
                         label: "My Goals",
-                        icon: "goals.png",
-                        onTap: () {}),
+                        icon: "goals.png", onTap: () {
+                      Navigator.pushNamed(context, '/goals');
+                    }),
                     _buildItem(context,
                         top: 240,
                         right: 80,
                         label: "My Progress",
-                        icon: "progress.png",
-                        onTap: () {}),
+                        icon: "progress.png", onTap: () {
+                      Navigator.pushNamed(context, '/home');
+                    }),
                     _buildItem(context,
                         bottom: 200,
                         left: 40,

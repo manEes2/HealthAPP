@@ -7,17 +7,11 @@ import 'package:health_app/core/const/app_color.dart';
 class MyProtocolScreen extends StatelessWidget {
   const MyProtocolScreen({super.key});
 
-  Future<Map<String, dynamic>> _getCombinedData(String uid) async {
-    final questionnaire = await FirebaseFirestore.instance
-        .collection('questionnaires')
-        .doc(uid)
-        .get();
-
+  Future<Map<String, dynamic>> _getProtocolData(String uid) async {
     final protocol =
         await FirebaseFirestore.instance.collection('protocols').doc(uid).get();
 
     return {
-      'questionnaire': questionnaire.data(),
       'protocol': protocol.data(),
     };
   }
@@ -26,155 +20,141 @@ class MyProtocolScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return Scaffold(
-      backgroundColor: medicalColors['primary'],
-      appBar: AppBar(title: const Text("My Healing Protocol")),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _getCombinedData(userId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: medicalColors['primary'],
+        body: Stack(children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.fill,
+            ),
+          ),
 
-          if (!snapshot.hasData || snapshot.data!['questionnaire'] == null) {
-            return const Center(
-              child: Text("Complete the questionnaire first"),
-            );
-          }
+          // Content
+          FutureBuilder<Map<String, dynamic>>(
+            future: _getProtocolData(userId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          final data = snapshot.data!;
-          final protocolContent = data['protocol']?['content'] as String?;
-          final questionnaireData =
-              data['questionnaire'] as Map<String, dynamic>;
+              if (!snapshot.hasData || snapshot.data!['protocol'] == null) {
+                return const Center(
+                  child: Text("Your protocol is being generated..."),
+                );
+              }
 
-          return _buildProtocolContent(
-            context,
-            protocolContent: protocolContent,
-            questionnaireData: questionnaireData,
-          );
-        },
+              final protocolContent =
+                  snapshot.data!['protocol']?['content'] as String?;
+
+              return _buildProtocolContent(protocolContent);
+            },
+          ),
+        ]),
       ),
     );
   }
 
-  Widget _buildProtocolContent(
-    BuildContext context, {
-    required Map<String, dynamic> questionnaireData,
-    String? protocolContent,
-  }) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildSectionTitle("📝 Your Health Profile"),
-        _buildUserInfoCards(questionnaireData),
-        const SizedBox(height: 30),
-        _buildSectionTitle("🛠 Personalized Protocol"),
-        if (protocolContent != null)
-          _buildAIProtocol(protocolContent)
-        else
-          _buildFallbackProtocol(questionnaireData),
-      ],
+  Widget _buildProtocolContent(String? protocolContent) {
+    return SingleChildScrollView(
+      // Wrap with scroll view
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 30),
+            const Text(
+              "🛠 Your Personalized Protocol",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontFamily: 'Besom'),
+            ),
+            const SizedBox(height: 20),
+            if (protocolContent != null)
+              _buildAIProtocol(protocolContent)
+            else
+              _buildDefaultProtocolTips(),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildAIProtocol(String content) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: MarkdownBody(
-          data: content,
-          styleSheet: MarkdownStyleSheet(
-            h1: TextStyle(color: Colors.green[800], fontSize: 24),
-            h2: TextStyle(color: Colors.green[700], fontSize: 20),
-            p: const TextStyle(fontSize: 16, height: 1.4),
+        child: ConstrainedBox(
+          // Add height constraint
+          constraints: const BoxConstraints(
+              minHeight: 200, maxHeight: 1000 // Adjust based on your needs
+              ),
+          child: SingleChildScrollView(
+            // Make markdown scrollable
+            child: MarkdownBody(
+              data: content,
+              styleSheet: MarkdownStyleSheet(
+                h1: TextStyle(
+                    color: Colors.green[800],
+                    fontSize: 22,
+                    fontFamily: 'Besom'),
+                h2: TextStyle(color: Colors.green[700], fontSize: 18),
+                p: const TextStyle(fontSize: 16, height: 1.5),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildFallbackProtocol(Map<String, dynamic> data) {
-    final fatRatio = data['fatRatio'] ?? 0.0;
-    final troubleFoods = List<String>.from(data['troubleFoods'] ?? []);
-    final symptoms = Map<String, dynamic>.from(data['symptomDetails'] ?? {});
-
-    return Column(
-      children: [
-        _buildProtocolTip("Start with 10-day cleanse using lemon water"),
-        _buildProtocolTip(
-            "Eat healing foods: papaya, blueberries, leafy greens"),
-        if (fatRatio > 25)
-          _buildProtocolTip("High fat ratio detected - Begin liver detox"),
-        if (symptoms.keys.any((part) => part.toLowerCase().contains("head")))
-          _buildProtocolTip("For headaches: Increase hydration & magnesium"),
-        if (troubleFoods.contains("Gluten"))
-          _buildProtocolTip("Use gluten-free alternatives in recipes"),
-      ],
-    );
-  }
-
-  Widget _buildUserInfoCards(Map<String, dynamic> data) {
-    return Column(
-      children: [
-        _buildInfoCard(
-            "Health History", (data['healthHistory'] as List).join(", ")),
-        _buildInfoCard(
-            "Trouble Foods", (data['troubleFoods'] as List).join(", ")),
-        _buildInfoCard(
-            "Fat Ratio", "${(data['fatRatio'] ?? 0.0).toStringAsFixed(1)}%"),
-        _buildInfoCard(
-          "Symptoms",
-          (data['symptomDetails'] as Map)
-              .entries
-              .map((e) => "${e.key} (${e.value}/10)")
-              .join(", "),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: const TextStyle(
-            fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String label, String value) {
-    return Card(
-      color: Colors.green[50],
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: ListTile(
-        leading: const Icon(Icons.info_outline, color: Colors.green),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(value, style: const TextStyle(fontSize: 15)),
-      ),
-    );
-  }
-
-  Widget _buildProtocolTip(String tip) {
-    return Card(
-      color: Colors.lightGreen[100],
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 6),
+  Widget _buildDefaultProtocolTips() {
+    return const Card(
+      elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
+        padding: EdgeInsets.all(16),
+        child: Column(
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.green),
-            const SizedBox(width: 10),
-            Expanded(child: Text(tip, style: const TextStyle(fontSize: 16))),
+            ProtocolTip("Start with morning lemon water"),
+            ProtocolTip("Include leafy greens in every meal"),
+            ProtocolTip("Practice deep breathing exercises"),
+            ProtocolTip("Get 7-8 hours of sleep nightly"),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ProtocolTip extends StatelessWidget {
+  final String tip;
+
+  const ProtocolTip(this.tip, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green[400]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              tip,
+              style: const TextStyle(fontSize: 16, fontFamily: 'Besom'),
+            ),
+          ),
+        ],
       ),
     );
   }
