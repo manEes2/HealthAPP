@@ -31,6 +31,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/
     - assets/images/heartbeat.png
     - assets/images/health_logo.png
     - assets/animations/health.json
@@ -38,3 +39,8 @@ flutter:
     - assets/animations/motivation.json
     - .env
 
+  fonts:
+    - family: Besom
+      fonts:
+        - asset: assets/fonts/Besom.ttf
+      

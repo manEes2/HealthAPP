@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:health_app/common_widgets/beehive_connecter_painter.dart';
+import 'package:health_app/core/const/app_color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -32,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 10));
     final prefs = await SharedPreferences.getInstance();
 
     final user = FirebaseAuth.instance.currentUser;
@@ -49,7 +51,6 @@ class _SplashScreenState extends State<SplashScreen>
       final isQuestionnaireCompleted =
           userDoc.data()?['questionnaire_completed'] ?? false;
 
-      // Cache locally
       prefs.setBool('questionnaire_completed', isQuestionnaireCompleted);
 
       if (isQuestionnaireCompleted) {
@@ -71,15 +72,66 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: medicalColors['primary'],
       body: Center(
-        child: ScaleTransition(
-          scale: _scale,
-          child: Image.asset(
-            'assets/images/health_logo.png',
-            width: 160,
-            height: 160,
-          ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            //map image
+            Positioned(
+              top: 60,
+              child: Image.asset('assets/images/map.png', width: 120),
+            ),
+
+            //text
+            Positioned(
+              top: 180,
+              child: Text(
+                'Medical Medium App',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontFamily: 'Besom',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            //hive image
+            Positioned(
+              top: 320,
+              right: 60,
+              child: Image.asset('assets/images/hive.png', width: 100),
+            ),
+
+            // Connector line (CustomPaint)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: BeeHiveConnectorPainter(),
+              ),
+            ),
+
+            // Bee image
+            Positioned(
+              left: 60,
+              top: 400,
+              child: ScaleTransition(
+                scale: _scale,
+                child: Image.asset('assets/images/bee.png', width: 50),
+              ),
+            ),
+
+            //leaves and signpost images
+            Positioned(
+              bottom: 0,
+              left: 0,
+              child: Image.asset('assets/images/leaves.png', width: 100),
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Image.asset('assets/images/signpost.png', width: 120),
+            ),
+          ],
         ),
       ),
     );

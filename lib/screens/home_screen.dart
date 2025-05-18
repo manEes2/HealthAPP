@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:health_app/core/const/app_color.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -131,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final progress = _calculateProgress();
 
     return Scaffold(
+      backgroundColor: medicalColors['primary'],
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text("Welcome to Health Companion"),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
+import 'package:health_app/core/const/app_color.dart'; // Ensure this has your `medicalColors`
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../providers/auth_provider.dart' as my_auth;
@@ -17,7 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
 
-  void Dispose() {
+  @override
+  void dispose() {
     emailCtrl.dispose();
     passCtrl.dispose();
     super.dispose();
@@ -28,27 +30,84 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = Provider.of<my_auth.AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: medicalColors['primary'],
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               const SizedBox(height: 80),
-              Text("Login",
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
+
+              // App logo or image
+              Image.asset(
+                'assets/images/bee.png',
+                height: 80,
+              ),
+              const SizedBox(height: 16),
+
+              // App name
+              Text(
+                "Medical Medium App",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Besom',
+                  color: Colors.black,
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Login title
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Welcome Back",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontFamily: 'Besom',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Please login to continue",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black,
+                    fontFamily: 'Besom',
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
 
               // Email field
               TextField(
                 controller: emailCtrl,
                 decoration: InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.green),
-                    )),
+                  labelText: 'Email',
+                  labelStyle:
+                      TextStyle(color: Colors.black, fontFamily: 'Besom'),
+                  prefixIcon: Icon(
+                    Icons.email,
+                    color: Colors.green,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: medicalColors['secondary']!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Password field
               TextField(
@@ -56,38 +115,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: auth.isPasswordObscured,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green),
-                  ),
+                  labelStyle:
+                      TextStyle(color: Colors.black, fontFamily: 'Besom'),
+                  prefixIcon: Icon(Icons.lock, color: Colors.green),
                   suffixIcon: IconButton(
                     icon: Icon(
                       auth.isPasswordObscured
                           ? Icons.visibility_off
                           : Icons.visibility,
-                      color: Colors.grey,
+                      color: Colors.green,
                     ),
-                    onPressed: () => auth.togglePasswordVisibility(),
+                    onPressed: auth.togglePasswordVisibility,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: medicalColors['secondary']!),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-              SizedBox(height: 20),
 
-              // Login button
+              const SizedBox(height: 30),
+
+              // Login Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: EdgeInsets.symmetric(vertical: 15),
+                    backgroundColor: medicalColors['secondary'],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: () async {
                     if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please fill in all fields")),
+                        const SnackBar(
+                            content: Text("Please fill in all fields")),
                       );
                       return;
                     }
@@ -109,7 +176,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         questionnaireDone =
                             userDoc.data()?['questionnaire_completed'] ?? false;
 
-                        // Optionally update local cache
                         final prefs = await SharedPreferences.getInstance();
                         prefs.setBool(
                             'questionnaire_completed', questionnaireDone);
@@ -122,25 +188,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Login failed")),
+                        const SnackBar(content: Text("Login failed")),
                       );
                     }
                   },
-                  child: Text("Login",
-                      style: TextStyle(fontSize: 18, color: Colors.white)),
+                  child: const Text(
+                    "Login",
+                    style: TextStyle(
+                        fontSize: 24, color: Colors.white, fontFamily: 'Besom'),
+                  ),
                 ),
               ),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-              //register button
+              // Register link
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/register');
                 },
                 child: Text(
                   "Don’t have an account? Register",
-                  style: TextStyle(fontSize: 16, color: Colors.black),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Besom',
+                  ),
                 ),
               ),
             ],
