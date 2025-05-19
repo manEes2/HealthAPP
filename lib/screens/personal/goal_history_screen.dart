@@ -69,7 +69,21 @@ class GoalHistoryScreen extends StatelessWidget {
                 final history = snapshot.data ?? [];
 
                 if (history.isEmpty) {
-                  return const Center(child: Text("No history found."));
+                  return const Center(
+                      child: Text(
+                    "No history found.",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontFamily: 'Besom',
+                        fontWeight: FontWeight.bold,
+                        color: Colors.brown,
+                        shadows: [
+                          Shadow(
+                              blurRadius: 2,
+                              color: Colors.black26,
+                              offset: Offset(1, 1)),
+                        ]),
+                  ));
                 }
 
                 return ListView.builder(
@@ -97,7 +111,8 @@ class GoalHistoryScreen extends StatelessWidget {
                               "📅 $date",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 18,
+                                fontFamily: 'Besom',
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -111,7 +126,12 @@ class GoalHistoryScreen extends StatelessWidget {
                                       const Icon(Icons.check,
                                           color: Colors.green),
                                       const SizedBox(width: 8),
-                                      Text(g, textAlign: TextAlign.center),
+                                      Text(g,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontFamily: 'Besom',
+                                          )),
                                     ],
                                   ),
                                 )),

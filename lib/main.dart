@@ -6,20 +6,33 @@ import 'package:health_app/providers/questionnaire_provider.dart';
 import 'package:health_app/screens/auth/login_screen.dart';
 import 'package:health_app/screens/auth/register_screen.dart';
 import 'package:health_app/screens/home_screen.dart';
-import 'package:health_app/screens/my_protocol_screen.dart';
 import 'package:health_app/screens/onboarding/questionnaire_wizard.dart';
 import 'package:health_app/screens/personal/goal_history_screen.dart';
+import 'package:health_app/screens/personal/mm_school_screen.dart';
+import 'package:health_app/screens/personal/profile_screen.dart';
+import 'package:health_app/screens/personal/protocol_screen.dart';
 import 'package:health_app/screens/personal/set_goal_screen.dart';
 import 'package:health_app/screens/personal/setting_screen.dart';
 import 'package:health_app/screens/personal/shop_screen.dart';
 import 'package:health_app/screens/personal/welcome_screen.dart';
 import 'package:health_app/screens/splash/splash_screen.dart';
+//import 'package:health_app/services/notification_service.dart';
 import 'package:provider/provider.dart';
+//import 'package:timezone/data/latest.dart' as tz;
+//import 'package:timezone/timezone.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Load environment variables
   await dotenv.load(fileName: ".env");
 
+  // Initialize notifications
+  //NotificationService().initialize();
+
+  //init timezone
+  //tz.initializeTimeZones();
+
+  // Initialize Firebase
   await Firebase.initializeApp();
 
   runApp(const MyApp());
@@ -51,9 +64,11 @@ class MyApp extends StatelessWidget {
           '/goals': (context) => SetGoalsScreen(),
           '/history': (context) => GoalHistoryScreen(),
           '/welcome': (context) => WelcomeScreen(),
-          '/protocol': (context) => MyProtocolScreen(),
+          '/protocol': (context) => ProtocolScreen(),
           '/settings': (context) => SettingsScreen(),
           '/shop': (context) => ShopScreen(),
+          '/school': (context) => MMSchoolScreen(),
+          '/profile': (context) => ProfileScreen(),
         },
         home: SplashScreen(),
       ),

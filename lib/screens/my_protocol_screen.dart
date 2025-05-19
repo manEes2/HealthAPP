@@ -23,56 +23,67 @@ class MyProtocolScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: medicalColors['primary'],
-        body: Stack(children: [
-          // Background image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.fill,
+        body: Stack(
+          children: [
+            // Background
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background.png',
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
 
-          // Content
-          FutureBuilder<Map<String, dynamic>>(
-            future: _getProtocolData(userId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+            // Content
+            FutureBuilder<Map<String, dynamic>>(
+              future: _getProtocolData(userId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.green),
+                  );
+                }
 
-              if (!snapshot.hasData || snapshot.data!['protocol'] == null) {
-                return const Center(
-                  child: Text("Your protocol is being generated..."),
-                );
-              }
+                if (!snapshot.hasData || snapshot.data!['protocol'] == null) {
+                  return const Center(
+                    child: Text(
+                      "Your protocol is being generated...",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Besom',
+                        color: Colors.black87,
+                      ),
+                    ),
+                  );
+                }
 
-              final protocolContent =
-                  snapshot.data!['protocol']?['content'] as String?;
+                final protocolContent =
+                    snapshot.data!['protocol']?['content'] as String?;
 
-              return _buildProtocolContent(protocolContent);
-            },
-          ),
-        ]),
+                return _buildProtocolContent(protocolContent);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProtocolContent(String? protocolContent) {
     return SingleChildScrollView(
-      // Wrap with scroll view
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 30, 16, 60),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
             const Text(
-              "🛠 Your Personalized Protocol",
+              "🌱 Your Healing Protocol",
               style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  fontFamily: 'Besom'),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Besom',
+                color: Colors.brown,
+              ),
             ),
             const SizedBox(height: 20),
             if (protocolContent != null)
@@ -87,28 +98,39 @@ class MyProtocolScreen extends StatelessWidget {
 
   Widget _buildAIProtocol(String content) {
     return Card(
-      elevation: 4,
+      elevation: 6,
+      color: Colors.yellow.shade50,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: ConstrainedBox(
-          // Add height constraint
-          constraints: const BoxConstraints(
-              minHeight: 200, maxHeight: 1000 // Adjust based on your needs
-              ),
+          constraints: const BoxConstraints(minHeight: 200, maxHeight: 1000),
           child: SingleChildScrollView(
-            // Make markdown scrollable
             child: MarkdownBody(
               data: content,
               styleSheet: MarkdownStyleSheet(
-                h1: TextStyle(
-                    color: Colors.green[800],
-                    fontSize: 22,
-                    fontFamily: 'Besom'),
-                h2: TextStyle(color: Colors.green[700], fontSize: 18),
-                p: const TextStyle(fontSize: 16, height: 1.5),
+                h1: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B5E20),
+                  fontFamily: 'Besom',
+                ),
+                h2: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF388E3C),
+                ),
+                p: const TextStyle(
+                  fontSize: 16,
+                  height: 1.6,
+                  color: Colors.black87,
+                ),
+                listBullet: const TextStyle(
+                  fontSize: 16,
+                  fontFamily: 'Besom',
+                ),
               ),
             ),
           ),
@@ -118,16 +140,20 @@ class MyProtocolScreen extends StatelessWidget {
   }
 
   Widget _buildDefaultProtocolTips() {
-    return const Card(
+    return Card(
       elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.all(16),
+      color: Colors.white.withOpacity(0.95),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            ProtocolTip("Start with morning lemon water"),
-            ProtocolTip("Include leafy greens in every meal"),
-            ProtocolTip("Practice deep breathing exercises"),
-            ProtocolTip("Get 7-8 hours of sleep nightly"),
+            ProtocolTip("Start your day with warm lemon water 🍋"),
+            ProtocolTip("Add leafy greens to every meal 🥬"),
+            ProtocolTip("Do deep breathing for 5–10 mins daily 🌬️"),
+            ProtocolTip("Get 7–8 hours of peaceful sleep 💤"),
           ],
         ),
       ),
@@ -143,15 +169,20 @@ class ProtocolTip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle, color: Colors.green[400]),
+          const Icon(Icons.spa, color: Color(0xFF43A047), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               tip,
-              style: const TextStyle(fontSize: 16, fontFamily: 'Besom'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'Besom',
+                color: Colors.black87,
+              ),
             ),
           ),
         ],

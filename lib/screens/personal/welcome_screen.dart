@@ -45,8 +45,9 @@ class WelcomeScreen extends StatelessWidget {
                         top: 64,
                         left: 20,
                         label: "My Profile",
-                        icon: "profile.png",
-                        onTap: () {}),
+                        icon: "profile.png", onTap: () {
+                      Navigator.pushNamed(context, '/profile');
+                    }),
                     _buildItem(context,
                         top: 90,
                         left: 130,
@@ -86,8 +87,9 @@ class WelcomeScreen extends StatelessWidget {
                         top: 380,
                         right: 124,
                         label: "MM School",
-                        icon: "school.png",
-                        onTap: () {}),
+                        icon: "school.png", onTap: () {
+                      Navigator.pushNamed(context, '/school');
+                    }),
                   ],
                 ),
               ),

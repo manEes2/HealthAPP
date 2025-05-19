@@ -28,7 +28,9 @@ class GeminiService {
       final json = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return json['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+        String result =
+            json['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+        return _sanitizeResponse(result);
       } else {
         print("Gemini API Error: ${json['error']}");
         return _getFallbackProtocol(data);
@@ -46,19 +48,28 @@ class GeminiService {
     final symptoms = data['symptomDetails'] ?? 'None';
 
     return '''
-Create a personalized health protocol for the user based on the following:
+You are a natural healing guide. Create a **personalized health protocol** using Markdown format based on the user's information:
 
-- Health History: $healthHistory
-- Trouble Foods: $troubleFoods
-- Fat Ratio: $fatRatio%
-- Symptoms: $symptoms
+- **Health History:** $healthHistory
+- **Trouble Foods:** $troubleFoods
+- **Fat Ratio:** $fatRatio%
+- **Symptoms:** $symptoms
 
-Include:
-- 2 healing recipes
-- 3 lifestyle tips
+Please include:
+- 2 healing food recipes with ingredients
+- 3 lifestyle or habit improvement tips
+- Use Markdown for formatting (headings, lists, bold)
 
-Format the output using Markdown.
+Avoid any disclaimers or AI-sounding intros.
 ''';
+  }
+
+  static String _sanitizeResponse(String response) {
+    String cleaned = response
+        .replaceAll(RegExp(r'^(Okay, here.*?\n)+', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\*\*Disclaimer:.*?\n+', dotAll: true), '')
+        .trim();
+    return cleaned;
   }
 
   static String _getFallbackProtocol(Map<String, dynamic> data) {
@@ -67,9 +78,11 @@ Format the output using Markdown.
     return '''
 ## Basic Protocol
 
-1. Drink at least 8 glasses of water daily  
-2. Avoid $troubleFoods  
-3. Take a 30-minute walk every day
+- Drink at least 8 glasses of water daily  
+- Avoid $troubleFoods  
+- Take a 30-minute walk every day  
+- Eat fresh fruits and vegetables  
+- Practice deep breathing or meditation for 10 minutes  
 ''';
   }
 }
