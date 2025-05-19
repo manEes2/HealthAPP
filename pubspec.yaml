@@ -37,6 +37,7 @@ flutter:
     - assets/animations/health.json
     - assets/animations/progress.json
     - assets/animations/motivation.json
+    - assets/animations/shop_nature.json
     - .env
 
   fonts:

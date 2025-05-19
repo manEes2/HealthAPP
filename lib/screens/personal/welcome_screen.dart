@@ -72,8 +72,9 @@ class WelcomeScreen extends StatelessWidget {
                         bottom: 200,
                         left: 40,
                         label: "My Community",
-                        icon: "community.png",
-                        onTap: () {}),
+                        icon: "community.png", onTap: () {
+                      Navigator.pushNamed(context, '/shop');
+                    }),
                     _buildItem(context,
                         bottom: 100,
                         left: 128,
