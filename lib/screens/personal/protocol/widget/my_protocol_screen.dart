@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:health_app/core/const/app_color.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
 
 class MyProtocolScreen extends StatelessWidget {
   const MyProtocolScreen({super.key});

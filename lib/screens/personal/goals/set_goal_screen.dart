@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/screens/personal/goals/provider/goal_provider.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/screens/personal/goals/provider/goal_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:health_app/core/const/app_color.dart';
 
 class SetGoalsScreen extends StatefulWidget {
   const SetGoalsScreen({super.key});

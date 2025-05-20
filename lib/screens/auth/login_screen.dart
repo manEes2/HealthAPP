@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:health_app/common_widgets/custom_loader.dart';
-import 'package:health_app/core/const/app_color.dart';
-import 'package:health_app/core/utils/validators/validation.dart';
+import 'package:medical_medium_app/common_widgets/custom_loader.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/core/utils/validators/validation.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../providers/auth_provider.dart' as my_auth;

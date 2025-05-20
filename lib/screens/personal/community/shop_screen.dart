@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/core/const/app_color.dart';
 import 'package:lottie/lottie.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
 
 class ShopScreen extends StatelessWidget {
   ShopScreen({super.key});

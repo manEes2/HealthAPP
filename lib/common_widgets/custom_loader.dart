@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/core/const/app_color.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
 
 class CustomLoader {
   static void show(BuildContext context, {String text = "Loading..."}) {

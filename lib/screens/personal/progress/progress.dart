@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:health_app/core/const/app_color.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:health_app/models/quote_model.dart';
-import 'package:health_app/services/quote_service.dart';
 import 'package:lottie/lottie.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/models/quote_model.dart';
+import 'package:medical_medium_app/services/quote_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

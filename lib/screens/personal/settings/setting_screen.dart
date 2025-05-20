@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/common_widgets/custom_loader.dart';
-import 'package:health_app/core/const/app_color.dart';
-import 'package:health_app/providers/auth_provider.dart';
-import 'package:health_app/screens/personal/settings/widgets/privacy_policy.dart';
+import 'package:medical_medium_app/common_widgets/custom_loader.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/providers/auth_provider.dart';
+import 'package:medical_medium_app/screens/personal/settings/widgets/privacy_policy.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatelessWidget {

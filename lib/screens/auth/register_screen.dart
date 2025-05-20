@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/common_widgets/custom_loader.dart';
-import 'package:health_app/core/utils/validators/validation.dart';
+import 'package:medical_medium_app/common_widgets/custom_loader.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/core/utils/validators/validation.dart';
 import 'package:provider/provider.dart';
-import 'package:health_app/core/const/app_color.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/core/const/app_color.dart';
-import 'package:health_app/screens/personal/protocol/widget/my_protocol_screen.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/screens/personal/protocol/widget/my_protocol_screen.dart';
 
 class ProtocolScreen extends StatelessWidget {
   const ProtocolScreen({super.key});

@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:health_app/common_widgets/custom_loader.dart';
-import 'package:health_app/services/firebase_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:medical_medium_app/common_widgets/custom_loader.dart';
+import 'package:medical_medium_app/services/firebase_service.dart';
 
 class ProfileProvider extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/screens/personal/profile/widgets/before_after_photo.dart';
+import 'package:medical_medium_app/screens/personal/profile/widgets/before_after_photo.dart';
 
 class PhotoTile extends StatelessWidget {
   final String category;

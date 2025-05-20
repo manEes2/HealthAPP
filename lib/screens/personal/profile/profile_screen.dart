@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:health_app/core/const/app_color.dart';
-import 'package:health_app/screens/personal/profile/provider/profile_provider.dart';
-import 'package:health_app/screens/personal/profile/widgets/photo_tile.dart';
-import 'package:health_app/screens/personal/profile/widgets/questionnaire_section.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
+import 'package:medical_medium_app/screens/personal/profile/provider/profile_provider.dart';
+import 'package:medical_medium_app/screens/personal/profile/widgets/photo_tile.dart';
 import 'package:provider/provider.dart';
+
+import 'widgets/questionnaire_section.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

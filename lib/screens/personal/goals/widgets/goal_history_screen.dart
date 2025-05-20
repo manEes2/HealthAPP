@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:health_app/core/const/app_color.dart';
 import 'package:intl/intl.dart';
+import 'package:medical_medium_app/core/const/app_color.dart';
 
 class GoalHistoryScreen extends StatelessWidget {
   const GoalHistoryScreen({super.key});
