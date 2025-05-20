@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
 import 'package:health_app/core/const/app_color.dart';
 import 'package:lottie/lottie.dart';
-import 'package:health_app/core/utils/gemini_service.dart';
+import 'package:health_app/services/gemini_service.dart';
 
 class QuestionnaireWizard extends StatefulWidget {
   const QuestionnaireWizard({super.key});

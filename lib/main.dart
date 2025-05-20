@@ -5,15 +5,16 @@ import 'package:health_app/providers/auth_provider.dart';
 import 'package:health_app/providers/questionnaire_provider.dart';
 import 'package:health_app/screens/auth/login_screen.dart';
 import 'package:health_app/screens/auth/register_screen.dart';
-import 'package:health_app/screens/home_screen.dart';
+import 'package:health_app/screens/personal/progress/progress.dart';
 import 'package:health_app/screens/onboarding/questionnaire_wizard.dart';
-import 'package:health_app/screens/personal/goal_history_screen.dart';
-import 'package:health_app/screens/personal/mm_school_screen.dart';
-import 'package:health_app/screens/personal/profile_screen.dart';
-import 'package:health_app/screens/personal/protocol_screen.dart';
-import 'package:health_app/screens/personal/set_goal_screen.dart';
-import 'package:health_app/screens/personal/setting_screen.dart';
-import 'package:health_app/screens/personal/shop_screen.dart';
+import 'package:health_app/screens/personal/goals/widgets/goal_history_screen.dart';
+import 'package:health_app/screens/personal/goals/provider/goal_provider.dart';
+import 'package:health_app/screens/personal/mm_school/mm_school_screen.dart';
+import 'package:health_app/screens/personal/profile/profile_screen.dart';
+import 'package:health_app/screens/personal/protocol/protocol_screen.dart';
+import 'package:health_app/screens/personal/goals/set_goal_screen.dart';
+import 'package:health_app/screens/personal/settings/setting_screen.dart';
+import 'package:health_app/screens/personal/community/shop_screen.dart';
 import 'package:health_app/screens/personal/welcome_screen.dart';
 import 'package:health_app/screens/splash/splash_screen.dart';
 //import 'package:health_app/services/notification_service.dart';
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => QuestionnaireProvider()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

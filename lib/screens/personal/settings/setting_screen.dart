@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
 import 'package:health_app/core/const/app_color.dart';
 import 'package:health_app/providers/auth_provider.dart';
+import 'package:health_app/screens/personal/settings/widgets/privacy_policy.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -56,7 +57,14 @@ class SettingsScreen extends StatelessWidget {
                     _buildNavigationTile(
                       icon: 'assets/images/security.png',
                       title: 'Privacy & Security',
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrivacyPolicyScreen(),
+                          ),
+                        );
+                      },
                     ),
                     // const SizedBox(height: 12),
                     // _buildNavigationTile(
