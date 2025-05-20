@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
-import 'package:health_app/core/const/app_color.dart'; // Ensure this has your `medicalColors`
+import 'package:health_app/core/const/app_color.dart';
+import 'package:health_app/core/utils/validators/validation.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../providers/auth_provider.dart' as my_auth;
@@ -37,15 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 80),
-
-              // App logo or image
-              Image.asset(
-                'assets/images/bee.png',
-                height: 80,
-              ),
+              Image.asset('assets/images/bee.png', height: 80),
               const SizedBox(height: 16),
-
-              // App name
               Text(
                 "Medical Medium App",
                 style: TextStyle(
@@ -55,10 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Colors.black,
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // Login title
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -72,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -84,23 +74,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
 
-              // Email field
-              TextField(
+              // Email
+              TextFormField(
                 controller: emailCtrl,
+                validator: (value) => Validators.validateEmail(value),
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle:
                       TextStyle(color: Colors.black, fontFamily: 'Besom'),
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: Colors.green,
-                  ),
+                  prefixIcon: Icon(Icons.email, color: Colors.green),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: medicalColors['secondary']!),
                     borderRadius: BorderRadius.circular(12),
@@ -109,9 +95,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Password field
-              TextField(
+              // Password
+              TextFormField(
                 controller: passCtrl,
+                validator: (value) =>
+                    Validators.validateEmptyText('Password', value),
                 obscureText: auth.isPasswordObscured,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -128,15 +116,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: auth.togglePasswordVisibility,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                   focusedBorder: OutlineInputBorder(
                     borderSide: BorderSide(color: medicalColors['secondary']!),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
 
               // Login Button
@@ -151,58 +137,58 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   onPressed: () async {
-                    if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
+                    final email = emailCtrl.text.trim();
+                    final password = passCtrl.text;
+
+                    CustomLoader.show(context, text: "Logging in...");
+                    final error = await auth.login(email, password);
+                    CustomLoader.hide(context);
+
+                    if (error != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Please fill in all fields")),
+                        SnackBar(content: Text(error)),
                       );
                       return;
                     }
 
-                    CustomLoader.show(context, text: "Logging in...");
-                    await auth.login(emailCtrl.text, passCtrl.text);
-                    CustomLoader.hide(context);
+                    // Fetch questionnaire status from Firestore
+                    final user = FirebaseAuth.instance.currentUser;
+                    bool questionnaireDone = false;
 
-                    if (auth.user != null) {
-                      final user = FirebaseAuth.instance.currentUser;
-                      bool questionnaireDone = false;
+                    if (user != null) {
+                      final userDoc = await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid)
+                          .get();
 
-                      if (user != null) {
-                        final userDoc = await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(user.uid)
-                            .get();
+                      questionnaireDone =
+                          userDoc.data()?['questionnaire_completed'] ?? false;
 
-                        questionnaireDone =
-                            userDoc.data()?['questionnaire_completed'] ?? false;
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool(
+                          'questionnaire_completed', questionnaireDone);
+                    }
 
-                        final prefs = await SharedPreferences.getInstance();
-                        prefs.setBool(
-                            'questionnaire_completed', questionnaireDone);
-                      }
-
-                      if (questionnaireDone) {
-                        Navigator.pushNamed(context, '/welcome');
-                      } else {
-                        Navigator.pushNamed(context, '/onboarding');
-                      }
+                    if (questionnaireDone) {
+                      Navigator.pushReplacementNamed(context, '/welcome');
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Login failed")),
-                      );
+                      Navigator.pushReplacementNamed(context, '/onboarding');
                     }
                   },
                   child: const Text(
                     "Login",
                     style: TextStyle(
-                        fontSize: 24, color: Colors.white, fontFamily: 'Besom'),
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontFamily: 'Besom',
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // Register link
+              // Register Link
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/register');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:health_app/common_widgets/custom_loader.dart';
+import 'package:health_app/core/utils/validators/validation.dart';
 import 'package:provider/provider.dart';
 import 'package:health_app/core/const/app_color.dart';
 import '../../providers/auth_provider.dart';
@@ -73,8 +74,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              TextField(
+
+              // Email field
+              TextFormField(
                 controller: emailCtrl,
+                validator: (value) => Validators.validateEmail(value),
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle:
@@ -90,8 +94,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextField(
+
+              // Password field
+              TextFormField(
                 controller: passCtrl,
+                validator: (value) => Validators.validatePassword(value),
                 obscureText: auth.isPasswordObscured,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -117,8 +124,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextField(
+
+              // Confirm Password field
+              TextFormField(
                 controller: confirmpassCtrl,
+                validator: (value) =>
+                    Validators.validateEmptyText('Confirm Password', value),
                 obscureText: auth.isPasswordObscured,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
@@ -155,16 +166,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   onPressed: () async {
-                    if (emailCtrl.text.isEmpty ||
-                        passCtrl.text.isEmpty ||
-                        confirmpassCtrl.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Please fill in all fields")),
-                      );
-                      return;
-                    }
-
                     if (passCtrl.text != confirmpassCtrl.text) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Passwords do not match")),
@@ -181,7 +182,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SnackBar(
                             content: Text("Registration successful")),
                       );
-                      Navigator.pushNamed(context, '/onboarding');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Registration failed")),
