@@ -21,6 +21,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _editing = false;
   Map<String, TextEditingController> _controllers = {};
   Map<String, dynamic> _questionnaireData = {};
+  final Map<String, bool> _sectionEditing = {
+    'health': false,
+    'foods': false,
+    'fat': false,
+    'symptoms': false,
+  };
 
   Future<void> _uploadImage(String category) async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -119,6 +125,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildSectionCard({
+    required String title,
+    required String sectionKey,
+    required IconData icon,
+    required List<String> fieldKeys,
+  }) {
+    final isEditing = _sectionEditing[sectionKey] ?? false;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Colors.white.withOpacity(0.95),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: Colors.brown),
+                const SizedBox(width: 8),
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontFamily: 'Besom',
+                        color: Colors.brown.shade800)),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(isEditing ? Icons.check : Icons.edit),
+                  color: isEditing ? Colors.green : Colors.grey,
+                  onPressed: () {
+                    setState(() {
+                      _sectionEditing[sectionKey] = !isEditing;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...fieldKeys.map((key) {
+              final controller = _controllers[key];
+              if (controller == null) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: TextFormField(
+                  controller: controller,
+                  enabled: isEditing,
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    labelText: key,
+                    prefixIcon: Icon(icon, color: Colors.brown.shade300),
+                    filled: true,
+                    fillColor: isEditing ? Colors.white : Colors.brown.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _sectionHeader(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -133,8 +206,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Build the questionnaire section
   Widget _buildQuestionnaireSection() {
+    List<Widget> cards = [];
+
+    _controllers.forEach((key, controller) {
+      IconData icon = Icons.question_answer;
+      Color color = Colors.brown.shade300;
+
+      if (key.toLowerCase().contains("symptom")) {
+        icon = Icons.sick;
+      } else if (key.toLowerCase().contains("fat")) {
+        icon = Icons.scale;
+      } else if (key.toLowerCase().contains("food")) {
+        icon = Icons.fastfood;
+      } else if (key.toLowerCase().contains("history")) {
+        icon = Icons.history;
+      }
+
+      cards.add(
+        Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ExpansionTile(
+            title:
+                Text(key, style: const TextStyle(fontWeight: FontWeight.bold)),
+            leading: Icon(icon, color: color),
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                child: TextFormField(
+                  controller: controller,
+                  enabled: _editing,
+                  maxLines: null,
+                  decoration: InputDecoration(
+                    labelText: "Edit $key",
+                    filled: true,
+                    fillColor: _editing ? Colors.white : Colors.brown.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -142,76 +263,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             _sectionHeader("📝 Questionnaire"),
             const Spacer(),
-            IconButton(
-              icon: Icon(_editing ? Icons.check_circle : Icons.edit),
-              color: _editing ? Colors.green : Colors.blueGrey,
-              tooltip: _editing ? "Save changes" : "Edit your answers",
-              onPressed: () {
-                if (_editing) {
-                  _saveQuestionnaire();
-                } else {
-                  setState(() => _editing = true);
-                }
-              },
-            )
+            if (_questionnaireData.isNotEmpty)
+              IconButton(
+                icon: Icon(_editing ? Icons.check_circle : Icons.edit),
+                color: _editing ? Colors.green : Colors.blueGrey,
+                tooltip: _editing ? "Save changes" : "Edit your answers",
+                onPressed: () {
+                  if (_editing) {
+                    _saveQuestionnaire();
+                  } else {
+                    setState(() => _editing = true);
+                  }
+                },
+              )
           ],
         ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _questionnaireData.isEmpty
-              ? Card(
-                  key: const ValueKey("no_data"),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  color: Colors.red.shade50,
-                  child: const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text("No questionnaire data found."),
-                  ),
-                )
-              : Card(
-                  key: const ValueKey("data"),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  color: Colors.green.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: _controllers.entries.map((entry) {
-                        IconData icon = Icons.question_answer;
-                        if (entry.key.toLowerCase().contains("symptom")) {
-                          icon = Icons.sick;
-                        } else if (entry.key.toLowerCase().contains("fat")) {
-                          icon = Icons.scale;
-                        } else if (entry.key.toLowerCase().contains("food")) {
-                          icon = Icons.fastfood;
-                        }
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: TextFormField(
-                            controller: entry.value,
-                            enabled: _editing,
-                            style: const TextStyle(fontSize: 16),
-                            decoration: InputDecoration(
-                              labelText: entry.key,
-                              prefixIcon:
-                                  Icon(icon, color: Colors.brown.shade300),
-                              filled: true,
-                              fillColor: _editing
-                                  ? Colors.white
-                                  : Colors.brown.shade50,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+        _questionnaireData.isEmpty
+            ? Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                color: Colors.red.shade50,
+                child: const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("No questionnaire data found."),
                 ),
-        ),
+              )
+            : Column(children: cards),
       ],
     );
   }

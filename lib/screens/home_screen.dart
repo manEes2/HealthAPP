@@ -18,8 +18,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Quote> quotes = [];
   List<String> goals = [];
-  List<String> reminders = [];
+  List<Map<String, dynamic>> reminders = [];
   Set<String> completedGoals = {};
+  bool showGoals = true;
   String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
   int _currentPage = 0;
   final PageController _pageController = PageController();
@@ -55,7 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (data != null) {
       final fetchedGoals = List<String>.from(data['goals'] ?? []);
-      final fetchedReminders = List<String>.from(data['reminders'] ?? []);
+      final fetchedReminders =
+          List<Map<String, dynamic>>.from(data['reminders'] ?? []);
       final fetchedCompleted = Set<String>.from(data['completedGoals'] ?? []);
       final lastUpdated = data['completedGoalsDate'] ?? '';
 
@@ -111,6 +113,25 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     });
+  }
+
+  void _deleteGoal(String goal) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() {
+      goals.remove(goal);
+      completedGoals.remove(goal);
+    });
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'goals': goals,
+      'completedGoals': completedGoals.toList(),
+    }, SetOptions(merge: true));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Deleted goal: "$goal"')),
+    );
   }
 
   @override
@@ -239,31 +260,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Goals
                   if (goals.isNotEmpty) ...[
-                    const Text("🎯 Your Goals",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Besom')),
-                    const SizedBox(height: 10),
-                    ...goals.map((goal) => CheckboxListTile(
-                          title: Text(goal,
-                              style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w500,
+                    GestureDetector(
+                      onTap: () => setState(() => showGoals = !showGoals),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("🎯 Your Goals",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                   fontFamily: 'Besom')),
-                          value: completedGoals.contains(goal),
-                          activeColor: Colors.green,
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                completedGoals.add(goal);
-                              } else {
-                                completedGoals.remove(goal);
-                              }
-                              _saveCompletedGoals();
-                            });
-                          },
-                        )),
+                          Icon(
+                              showGoals ? Icons.expand_less : Icons.expand_more)
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (showGoals)
+                      ...goals.map((goal) => ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 8),
+                            leading: Checkbox(
+                              value: completedGoals.contains(goal),
+                              activeColor: Colors.green,
+                              onChanged: (val) {
+                                setState(() {
+                                  if (val == true) {
+                                    completedGoals.add(goal);
+                                  } else {
+                                    completedGoals.remove(goal);
+                                  }
+                                  _saveCompletedGoals();
+                                });
+                              },
+                            ),
+                            title: Text(
+                              goal,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Besom',
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteGoal(goal),
+                            ),
+                          )),
                     const SizedBox(height: 20),
                   ],
 
@@ -276,11 +319,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   ...reminders.map((item) => ListTile(
                         leading: const Icon(Icons.alarm, color: Colors.green),
-                        title: Text(item,
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Besom')),
+                        title: Text(
+                          item['title'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Besom',
+                          ),
+                        ),
+                        subtitle: Text(
+                          item['time'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Besom',
+                          ),
+                        ),
                       )),
 
                   const SizedBox(height: 30),
