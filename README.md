@@ -52,7 +52,7 @@ A holistic wellness platform providing personalized healing protocols, symptom t
 ### Setup
 1. Clone repository:
    ```bash
-   git clone https://github.com/1Shisir/health_app.git
+   gh repo clone manEes2/HealthAPP
    cd medical-medium-app
 
 2. Install dependencies:
