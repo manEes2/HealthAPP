@@ -50,30 +50,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
 
     if (data != null) {
       final fetchedGoals = List<String>.from(data['goals'] ?? []);
-      final fetchedReminders =
-          List<Map<String, dynamic>>.from(data['reminders'] ?? []);
+      final fetchedReminders = List<Map<String, dynamic>>.from(data['reminders'] ?? []);
       final fetchedCompleted = Set<String>.from(data['completedGoals'] ?? []);
       final lastUpdated = data['completedGoalsDate'] ?? '';
 
       setState(() {
-        for (final goal in fetchedGoals) {
-          if (!goals.contains(goal)) {
-            goals.add(goal);
-          }
-        }
-
-        for (final reminder in fetchedReminders) {
-          if (!reminders.contains(reminder)) {
-            reminders.add(reminder);
-          }
-        }
-
+        goals = fetchedGoals;
+        reminders = fetchedReminders;
         completedGoals = lastUpdated == today ? fetchedCompleted : {};
       });
     }
@@ -83,13 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    // Save current day's completed goals
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'completedGoals': completedGoals.toList(),
       'completedGoalsDate': today,
     }, SetOptions(merge: true));
 
-    // Also log to daily history subcollection
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -143,8 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double _calculateProgress() {
     if (goals.isEmpty) return 0;
-
-    // Count how many of the current goals are marked as completed
     final completed = goals.where((g) => completedGoals.contains(g)).length;
     return completed / goals.length;
   }
@@ -156,130 +140,161 @@ class _HomeScreenState extends State<HomeScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: medicalColors['primary'],
-        body: Stack(children: [
-          // Background Image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.fill,
+        body: Stack(
+          children: [
+            // Background Image
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background.png',
+                fit: BoxFit.fill,
+              ),
             ),
-          ),
-          RefreshIndicator(
-            onRefresh: () async {
-              _fetchGoalsAndReminders();
-              setState(() {});
-            },
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Progress Section
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/history');
-                    },
-                    child: Card(
-                      color: Colors.yellow[50],
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Lottie.asset("assets/animations/progress.json",
-                                width: 100, height: 100),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Today's Progress",
+            // Profile Button
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.person, size: 30, color: Colors.white),
+                onPressed: () => Navigator.pushNamed(context, '/profile'),
+              ),
+            ),
+            // Main Content
+            RefreshIndicator(
+              onRefresh: () async {
+                _fetchGoalsAndReminders();
+                setState(() {});
+              },
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40), // Space for profile button
+                    // Progress Section
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/history'),
+                      child: Card(
+                        color: Colors.yellow[50],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Lottie.asset(
+                                "assets/animations/progress.json",
+                                width: 100,
+                                height: 100,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Today's Progress",
                                       style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Besom')),
-                                  const SizedBox(height: 10),
-                                  LinearProgressIndicator(
-                                      value: progress, color: Colors.green),
-                                  const SizedBox(height: 8),
-                                  Text(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Besom',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    LinearProgressIndicator(
+                                      value: progress,
+                                      color: Colors.green,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
                                       "${goals.where((g) => completedGoals.contains(g)).length}/${goals.length} goals achieved",
                                       style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                          fontFamily: 'Besom')),
-                                ],
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                        fontFamily: 'Besom',
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // Motivation Quotes
-                  const Text("💬 Daily Motivation",
+                    // Motivation Quotes
+                    const Text(
+                      "💬 Daily Motivation",
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Besom')),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 140,
-                    child: quotes.isEmpty
-                        ? const Center(child: CircularProgressIndicator())
-                        : PageView.builder(
-                            controller: _pageController,
-                            itemCount: quotes.length,
-                            itemBuilder: (_, index) {
-                              final quote = quotes[index];
-                              return Card(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                color: Colors.green[50],
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Center(
-                                    child: Text(
-                                      "“${quote.quote}”\n— ${quote.author}",
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontStyle: FontStyle.italic),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Goals
-                  if (goals.isNotEmpty) ...[
-                    GestureDetector(
-                      onTap: () => setState(() => showGoals = !showGoals),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text("🎯 Your Goals",
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Besom')),
-                          Icon(
-                              showGoals ? Icons.expand_less : Icons.expand_more)
-                        ],
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Besom',
                       ),
                     ),
                     const SizedBox(height: 10),
-                    if (showGoals)
-                      ...goals.map((goal) => ListTile(
+                    SizedBox(
+                      height: 140,
+                      child: quotes.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : PageView.builder(
+                              controller: _pageController,
+                              itemCount: quotes.length,
+                              itemBuilder: (_, index) {
+                                final quote = quotes[index];
+                                return Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  color: Colors.green[50],
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Center(
+                                      child: Text(
+                                        "\"${quote.quote}\"\n— ${quote.author}",
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Goals
+                    if (goals.isNotEmpty) ...[
+                      GestureDetector(
+                        onTap: () => setState(() => showGoals = !showGoals),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "🎯 Your Goals",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Besom',
+                              ),
+                            ),
+                            Icon(showGoals ? Icons.expand_less : Icons.expand_more),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (showGoals)
+                        ...goals.map(
+                          (goal) => ListTile(
                             contentPadding: const EdgeInsets.symmetric(
-                                vertical: 4, horizontal: 8),
+                              vertical: 4,
+                              horizontal: 8,
+                            ),
                             leading: Checkbox(
                               value: completedGoals.contains(goal),
                               activeColor: Colors.green,
@@ -306,18 +321,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () => _deleteGoal(goal),
                             ),
-                          )),
-                    const SizedBox(height: 20),
-                  ],
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                    ],
 
-                  // Daily Reminders
-                  const Text("🕒 Today's Reminders",
+                    // Daily Reminders
+                    const Text(
+                      "🕒 Today's Reminders",
                       style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Besom')),
-                  const SizedBox(height: 10),
-                  ...reminders.map((item) => ListTile(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Besom',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ...reminders.map(
+                      (item) => ListTile(
                         leading: const Icon(Icons.alarm, color: Colors.green),
                         title: Text(
                           item['title'] ?? '',
@@ -334,14 +354,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             fontFamily: 'Besom',
                           ),
                         ),
-                      )),
-
-                  const SizedBox(height: 30),
-                ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             ),
-          ),
-        ]),
+          ],
+        ),
       ),
     );
   }

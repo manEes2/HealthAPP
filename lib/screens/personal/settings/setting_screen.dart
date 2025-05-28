@@ -50,8 +50,10 @@ class SettingsScreen extends StatelessWidget {
                     _buildSwitchTile(
                       icon: 'assets/images/notification.png',
                       title: 'Notifications',
-                      value: true,
-                      onChanged: (val) {},
+                      value: false,
+                      onChanged: (val) {
+                        val = !val;
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildNavigationTile(

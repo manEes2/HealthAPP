@@ -57,7 +57,7 @@ class WelcomeScreen extends StatelessWidget {
                     }),
                     _buildItem(context,
                         top: 132,
-                        right: 48,
+                        right: 64,
                         label: "My Goals",
                         icon: "goals.png", onTap: () {
                       Navigator.pushNamed(context, '/goals');
@@ -70,14 +70,14 @@ class WelcomeScreen extends StatelessWidget {
                       Navigator.pushNamed(context, '/home');
                     }),
                     _buildItem(context,
-                        bottom: 200,
+                        bottom: 300,
                         left: 40,
                         label: "My Community",
                         icon: "community.png", onTap: () {
                       Navigator.pushNamed(context, '/shop');
                     }),
                     _buildItem(context,
-                        bottom: 100,
+                        bottom: 180,
                         left: 128,
                         label: "Settings",
                         icon: "settings.png", onTap: () {

@@ -180,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (auth.user != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text("Registration successful")),
+                            content: Text("Verification email sent")),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(

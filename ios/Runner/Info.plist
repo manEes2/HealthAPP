@@ -49,5 +49,17 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs camera access to take photos for profile and health tracking purposes</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to photo library for selecting profile and health-related images</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app needs microphone access for voice notes and audio features</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>This app needs permission to save photos to your gallery</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app needs access to location for finding nearby health services</string>
+		<key>NSUserNotificationUsageDescription</key>
+		<string>This app needs to send you notifications for reminders and health updates</string>
 	</dict>
 </plist>

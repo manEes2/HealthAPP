@@ -76,18 +76,6 @@ Create .env file:
 Update security rules in firestore.rules
 
 
-🤝 Contributing
-Fork the project
 
-Create your feature branch (git checkout -b feature/AmazingFeature)
 
-Commit your changes (git commit -m 'Add some amazing feature')
-
-Push to the branch (git push origin feature/AmazingFeature)
-
-Open a Pull Request
-
-📧 Contact
-For support or questions:
-📩 shisirghimire21@gmail.com
-🌐 shisirghimire21@gmail.com
+fell free to ask me any questions or need any help with the project. I'll be happy to assist you. Reach me at maneess@icloud.com|| +61 0451997642

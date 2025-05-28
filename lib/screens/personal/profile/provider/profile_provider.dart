@@ -43,7 +43,33 @@ class ProfileProvider extends ChangeNotifier {
 
   Future<void> uploadPhoto(String category, BuildContext context) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    
+    // Show dialog to choose between camera and gallery
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Choose photo source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    if (source == null) return;
+
+    final picked = await picker.pickImage(source: source);
     if (picked == null) return;
 
     final file = File(picked.path);
