@@ -2,6 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:medical_medium_app/providers/temp_auth_provider.dart';
+import 'package:medical_medium_app/providers/auth_provider.dart';
+
+import 'firebase_options.dart';
 import 'package:medical_medium_app/providers/questionnaire_provider.dart';
 import 'package:medical_medium_app/screens/auth/temp_login_screen.dart';
 import 'package:medical_medium_app/screens/auth/register_screen.dart';
@@ -31,7 +34,9 @@ void main() async {
 
   // Initialize Firebase
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     print('Error initializing Firebase: $e');
   }
@@ -55,7 +60,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TempAuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => QuestionnaireProvider()),
+
         ChangeNotifierProvider(create: (_) => GoalProvider()),
       ],
       child: MaterialApp(

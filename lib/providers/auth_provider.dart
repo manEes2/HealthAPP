@@ -11,6 +11,25 @@ class AuthProvider with ChangeNotifier {
 
   UserModel? get user => _user;
 
+  String? get userName => _user?.email.split('@')[0];
+
+  String? _realUserName;
+  String? get realUserName => _realUserName;
+
+  bool _isHomePageLinked = false;
+  bool get isHomePageLinked => _isHomePageLinked;
+  void toggleHomePageLink() {
+    _isHomePageLinked = !_isHomePageLinked;
+    notifyListeners();
+  }
+
+  bool _showAdvancedOptions = false;
+  bool get showAdvancedOptions => _showAdvancedOptions;
+  void toggleAdvancedOptions() {
+    _showAdvancedOptions = !_showAdvancedOptions;
+    notifyListeners();
+  }
+
   // Login with email verification check
   Future<String?> login(String email, String password) async {
     try {
@@ -22,6 +41,7 @@ class AuthProvider with ChangeNotifier {
         }
 
         _user = UserModel(uid: result.uid, email: result.email!);
+        await fetchRealUserName();
 
         // Save login status to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
@@ -45,6 +65,7 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.register(email, password);
       if (result != null) {
         _user = UserModel(uid: result.uid, email: result.email!);
+        await fetchRealUserName();
         notifyListeners();
         return null;
       } else {
@@ -78,5 +99,14 @@ class AuthProvider with ChangeNotifier {
   void togglePasswordVisibility() {
     _isPasswordObscured = !_isPasswordObscured;
     notifyListeners();
+  }
+
+  Future<void> fetchRealUserName() async {
+    // Simulate fetching user's real name from database, using _user's uid.
+    if (_user != null) {
+      // Replace the below simulation with an actual database fetch in production.
+      _realUserName = "RealName_${_user!.uid}";
+      notifyListeners();
+    }
   }
 }
